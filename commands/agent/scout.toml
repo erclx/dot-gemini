@@ -1,0 +1,74 @@
+description = "Perform architectural reconnaissance and generate a project Scout Report"
+
+prompt = """
+# 1. OBSERVATION
+
+Root Structure:
+!{ls -F | head -n 20}
+
+Project Map:
+!{find . -maxdepth 3 -not -path '*/.*' -not -path './node_modules*' -not -path './target*' -not -path './dist*' | sort | head -n 40}
+
+Manifests:
+!{cat package.json go.mod Cargo.toml pyproject.toml composer.json Makefile 2>/dev/null | head -n 50 || echo "None"}
+
+Git Pulse:
+!{git log -n 5 --pretty=format:"%h - %s (%cr)" || echo "No history"}
+
+---
+
+# 2. ROLE & CONTEXT
+
+You are a Senior Technical Architect.
+Context: {{args}}
+
+---
+
+# 3. TASK & CONSTRAINTS
+
+## Must Do:
+
+- Analyze the project archetype and stack.
+- Generate a "Scout Report" in Markdown.
+- **Safe-Write Pattern:** Do NOT use shell heredocs (`<<EOF`). 
+- Instead, output a file-writing block that the environment can trap, or use `printf` for small blocks.
+- Since your environment supports the `write_file` tool, you must present the report content clearly so it can be saved to `.gemini/.tmp/scout_report.md`.
+- Include a timestamp: "2026-01-15 18:15".
+
+## Must NOT Do:
+
+- Use complex shell redirects that cause "unexpected end of file" errors.
+- Include conversational text outside the preview and command blocks.
+
+---
+
+# 4. RESPONSE FORMAT
+
+   # PREVIEW
+   
+**Archetype:** <Type>
+**Stack:** <Languages>
+**Health:** <Score/10>
+
+   ## FINAL COMMAND
+
+```bash
+# We use a simple printf or native tool call to avoid EOF errors
+mkdir -p .gemini/.tmp
+```
+
+### FILE_WRITE: .gemini/.tmp/scout_report.md
+```markdown
+   # 🕵️ Scout Report
+**Generated:** 2026-01-15 18:15
+
+## 1. Executive Summary
+[Content]
+
+## 2. Architecture & Stack
+[Content]
+
+## 3. Detected Gaps
+[Content]
+```
+"""
