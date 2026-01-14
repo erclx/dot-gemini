@@ -1,0 +1,99 @@
+description = "Generate comprehensive PR descriptions and open GitHub Draft PRs"
+
+prompt = """
+# 1. OBSERVATION
+
+Remote URL:
+!{git remote get-url origin || echo "NO_REMOTE_CONFIGURED"}
+
+Current Branch:
+!{git branch --show-current || echo "unknown_branch"}
+
+Recent Commits (vs main):
+!{git log main..HEAD --oneline -n 20 || echo "No commits found"}
+
+Diff Stats:
+!{git diff main..HEAD --stat | tail -n 20 || echo "No diff stats"}
+
+Raw Diff (First 100 lines):
+!{git diff main..HEAD | head -n 100 || echo "No diff content"}
+
+---
+
+# 2. ROLE & CONTEXT
+
+You are a Senior Software Architect specializing in documentation-driven code reviews.
+User Notes: {{args}}
+
+---
+
+# 3. TASK & CONSTRAINTS
+
+## Must Do:
+
+- **Pre-flight Check:** Block execution if 'Remote URL' is "NO_REMOTE_CONFIGURED".
+- **Title Format:** Use `<Type>: <Subject>` (e.g., "Feat: Implement Auth Provider").
+- **Body Structure:** Use headers: `## Summary`, `## Key Changes`, `## Testing`.
+- **Heredoc Protocol:** - Write the PR body to `.gemini/pr_body.md`.
+    - Use `cat <<'EOF' > .gemini/pr_body.md` to prevent shell expansion.
+    - Ensure the closing `EOF` is on its own line with zero leading whitespace.
+- **GitHub CLI:** Use `gh pr create --title "[Title]" --body-file .gemini/pr_body.md --draft`.
+- **Escaping:** Escape all double quotes in the title as \".
+
+## Must NOT Do:
+
+- Use emojis in the PR title.
+- Indent the closing `EOF` tag.
+- Include conversational filler or "Here is the command".
+- Assume the existence of a `.gemini` folder; create it if needed.
+
+---
+
+# 4. RESPONSE FORMAT
+
+   # PREVIEW
+
+**Title:** <Generated Title>
+**Branch:** <Current Branch>
+**Files Impacted:** <count from Diff Stats>
+   
+**Description Summary:**
+<One sentence overview of the changes>
+   
+## FINAL COMMAND
+
+```bash
+# Ensure directory exists
+mkdir -p .gemini
+
+# Write PR body
+cat <<'EOF' > .gemini/pr_body.md
+## Summary
+<content>
+
+## Key Changes
+- <change>
+
+## Testing
+- <test_details>
+EOF
+
+# Create the Draft PR
+gh pr create --title "<Type>: <Subject>" --body-file .gemini/pr_body.md --draft
+```
+   
+---
+
+**Note:** If 'Remote URL' is missing, output the following:
+
+# PREVIEW
+
+**Status:** Error
+**Reason:** Git remote 'origin' not found.
+
+## FINAL COMMAND
+
+```bash
+echo "Error: No git remote configured. PR cannot be created."
+```
+"""
