@@ -1,0 +1,42 @@
+description = "Idempotently initializes the project with 'Ghost Folder' infrastructure and ignore rules."
+prompt = """
+1. OBSERVATION (Ground Truth):
+   Project Root: !{pwd}
+   Gitignore Exists: !{[ -f .gitignore ] && echo 'YES' || echo 'NO'}
+   Geminiignore Exists: !{[ -f .geminiignore ] && echo 'YES' || echo 'NO'}
+
+2. CONTEXT:
+   User Intent: "Initialize project for Erclx-Core usage."
+
+3. TASK:
+   Act as a Senior DevOps Architect.
+   Generate a robust, **idempotent** shell command to set up the environment.
+
+   **Requirements:**
+   1. Ensure `.gemini/.tmp/` directory exists.
+   2. Ensure `.gitignore` ignores `.gemini/.tmp/` (Check before appending!).
+   3. Ensure `.geminiignore` ignores `.gemini/.tmp/` (Check before appending!).
+   4. Create a `.gitkeep` inside `.gemini/.tmp/` to reserve the folder structure (optional but good practice).
+   
+   **Shell Logic (Bash):**
+   Use this pattern for appending to prevent duplicates:
+   `grep -qF "entry" file || echo "entry" >> file`
+
+4. RESPONSE FORMAT (Strict):
+
+   # PREVIEW
+   **Initialization Plan:**
+   - [x] Create Ghost Folder: `.gemini/.tmp/`
+   - [x] Update `.gitignore` (Add `.gemini/.tmp/` if missing)
+   - [x] Update `.geminiignore` (Add `.gemini/.tmp/` if missing)
+   
+   _(This command is idempotent and safe to run multiple times)_
+
+   ## FINAL COMMAND
+   mkdir -p .gemini/.tmp && \
+   touch .gitignore .geminiignore && \
+   (grep -qF ".gemini/.tmp/" .gitignore || echo ".gemini/.tmp/" >> .gitignore) && \
+   (grep -qF ".gemini/.tmp/" .geminiignore || echo ".gemini/.tmp/" >> .geminiignore) && \
+   touch .gemini/.tmp/.gitkeep && \
+   echo "✅ Project initialized: Ghost Folders secured."
+"""
