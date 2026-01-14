@@ -1,0 +1,39 @@
+description = "Analyzes staged changes to generate a strict, atomic Conventional Commit message."
+prompt = """
+1. OBSERVATION (Ground Truth):
+   Staged Files: !{git diff --cached --name-only || echo 'NO_STAGED_CHANGES'}
+   Diff Content: !{git diff --cached | head -n 100 || echo ''}
+
+2. CONTEXT (User Input):
+   User Hint: "{{args}}"
+
+3. TASK:
+   Act as a Senior DevOps Engineer enforcing strict version control standards.
+   Analyze the 'Staged Files' and 'Diff Content'.
+
+   **Critical Constraints:**
+   - Format: `<type>: <subject>` (or `<type>!: <subject>` for breaking).
+   - Types: feat, fix, refactor, chore, docs, perf, test, style, build, ci, revert.
+   - NO scopes (e.g., `feat(api):` is FORBIDDEN).
+   - Subject: Imperative mood ("add" not "added"), all lowercase, no trailing period.
+   - Length: Max 50 chars.
+   - **Quoting Safety:** If the generated message contains double quotes, ensure they are escaped with a backslash (e.g., `\"`) so the shell command remains valid.
+
+   **Edge Case:**
+   - If 'Staged Files' contains "NO_STAGED_CHANGES" or is empty, the final command must be an echo error message, not a commit.
+
+4. RESPONSE FORMAT (Strict):
+
+   # PREVIEW
+   **Proposed Message:**
+   `[generated message]`
+
+   **Analysis:**
+   - **Type:** [Selected Type]
+   - **Length:** [Count]/50 chars
+   - **Reasoning:** [Why this type fits the diff]
+
+   ## FINAL COMMAND
+   [If changes exist]: git commit -m "[generated message]"
+   [If no changes]: echo "Error: No staged changes detected. Please run 'git add' first."
+"""

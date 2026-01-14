@@ -1,0 +1,19 @@
+# Tooling
+.gemini/.tmp/
+.gemini/checkpoints/
+
+# Deps
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+bun.lockb
+
+# Build
+dist/
+build/
+.next/
+
+# Secrets
+.env
+*.pem
+*.key

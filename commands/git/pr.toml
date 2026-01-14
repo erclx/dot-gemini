@@ -1,0 +1,52 @@
+description = "Synthesizes a Senior-level PR description and opens a Draft PR (Safe-Mode)."
+prompt = """
+1. OBSERVATION (Ground Truth):
+   Remote: !{git remote -v || echo 'NO_REMOTE'}
+   Branch: !{git branch --show-current || echo 'unknown'}
+   Log: !{git log main..HEAD --pretty=format:"%h %s" || echo 'No commits relative to main'}
+   Stats: !{git diff main..HEAD --stat || echo 'No changes'}
+   Diff: !{git diff main..HEAD | head -n 100 || echo ''}
+
+2. CONTEXT:
+   User Notes: "{{args}}"
+
+3. TASK:
+   Act as a Senior Engineer.
+   
+   **Pre-flight Check:**
+   - If 'Remote' contains 'NO_REMOTE', do NOT generate a PR command. Instead, output an echo error.
+   
+   **Content Generation:**
+   - **Title Rules:** `<Type>: <Subject>`
+     1. **Capitalize the Type** (e.g., 'Feat', 'Fix', 'Docs').
+     2. **Capitalize the Subject** (e.g., 'Add user login', 'Update readme').
+     3. NO emojis. Max 72 chars.
+   - **Body Rules:**
+     - Headers: `## Summary`, `## Key Changes`, `## Technical Context`, `## Testing`.
+   - Tone: Objective, architectural, no fluff.
+   
+   **Shell Safety Strategy (The Quoted Heredoc):**
+   - Use `cat <<'EOF' > .gemini/.tmp/pr_body.md` (Note the single quotes around EOF).
+   - The single quotes `'EOF'` prevent the shell from executing code inside backticks found in the markdown.
+   - **CRITICAL:** The closing `EOF` must be strictly at the **start of the line** (Column 0).
+   - **CRITICAL:** Escape double quotes in the **Title** string (e.g., `\"`) for the `gh pr create` flag.
+
+4. RESPONSE FORMAT (Strict):
+
+   # PREVIEW
+   **Title:** `[Generated Title]`
+   
+   **Proposed Body:**
+   ```markdown
+   [Body Content]
+
+```
+
+## FINAL COMMAND
+
+[If remote exists]:
+mkdir -p .gemini/.tmp && cat <<'EOF' > .gemini/.tmp/pr_body.md
+[Body Content]
+EOF
+gh pr create --title "[Generated Title]" --body-file .gemini/.tmp/pr_body.md --draft
+"""
