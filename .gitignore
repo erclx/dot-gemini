@@ -1,6 +1,9 @@
 # System
 *.gemini-bus.sock
 
+# Test
+/.sandbox/
+
 # Tooling
 .gemini/.tmp/
 .gemini/checkpoints/
