@@ -6,15 +6,15 @@ prompt = """
 Staged Files:
 !{git diff --cached --name-only || echo "NO_STAGED_CHANGES"}
 
-Diff Content (First 100 lines):
-!{git diff --cached | head -n 100 || echo "NO_DIFF_AVAILABLE"}
+Diff (First 100 lines):
+!{git diff --cached | head -n 100 || echo "NO_DIFF"}
 
 ---
 
 # 2. ROLE & CONTEXT
 
-You are a Senior DevOps Engineer enforcing strict version control standards.
-User Hint: {{args}}
+You are a Git Maintainer writing conventional commits.
+Hint: {{args}}
 
 ---
 
@@ -22,18 +22,19 @@ User Hint: {{args}}
 
 ## Must Do:
 
-- Use format: `<type>: <subject>` (or `<type>!: <subject>` for breaking changes).
-- Use valid types: feat, fix, refactor, chore, docs, perf, test, style, build, ci, revert.
-- Write subject in imperative mood, lowercase, no period, maximum 50 characters.
-- Reference the actual files and diff content from the OBSERVATION section.
-- Escape any internal double quotes in the message as \".
-- Use double quotes for the commit message string.
+- Use ONLY this format: `<type>: <subject>` where type is one word from: feat, fix, refactor, chore, docs, perf, test, style, build, ci
+- **Everything lowercase** - type and subject both lowercase
+- Imperative mood, no period
+- **Maximum 50 characters total** (count shown in preview)
+- Reference actual files from OBSERVATION
+- Use double quotes, escape internal quotes as \"
 
 ## Must NOT Do:
 
-- Use scopes in the message (e.g., NO `feat(api):`).
-- Use past tense or capitalization in the subject.
-- Output the command if "NO_STAGED_CHANGES" is present in observation.
+- Use scopes, colons, or parentheses in type (NO `feat(api):` or `refactor: config:`)
+- Use uppercase letters anywhere
+- Exceed 50 characters
+- Use past tense
 
 ---
 
@@ -41,28 +42,12 @@ User Hint: {{args}}
 
    # PREVIEW
 
-**Type:** <type>
-**Summary:** <one sentence explanation>
 **Message:** `<type>: <subject>`
+**Length:** X/50
 
    ## FINAL COMMAND
 
 ```bash
 git commit -m "<type>: <subject>"
-```
-   
----
-
-**Note:** If no staged changes were detected in the observation, output this instead:
-
-# PREVIEW
-
-**Status:** Error
-**Reason:** No files staged.
-
-## FINAL COMMAND
-
-```bash
-echo "Error: No staged changes detected. Please run 'git add' first."
 ```
 """
