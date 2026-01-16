@@ -22,7 +22,7 @@ Raw Diff (First 100 lines):
 
 # 2. ROLE & CONTEXT
 
-You are a Senior Software Architect specializing in documentation-driven code reviews.
+You are a Senior Software Architect writing documentation-driven PRs.
 User Notes: {{args}}
 
 ---
@@ -31,21 +31,19 @@ User Notes: {{args}}
 
 ## Must Do:
 
-- **Pre-flight Check:** Block execution if 'Remote URL' is "NO_REMOTE_CONFIGURED".
-- **Title Format:** Use `<Type>: <Subject>` (e.g., "Feat: Implement Auth Provider").
-- **Body Structure:** Use headers: `## Summary`, `## Key Changes`, `## Testing`.
-- **Heredoc Protocol:** - Write the PR body to `.gemini/pr_body.md`.
-    - Use `cat <<'EOF' > .gemini/pr_body.md` to prevent shell expansion.
-    - Ensure the closing `EOF` is on its own line with zero leading whitespace.
-- **GitHub CLI:** Use `gh pr create --title "[Title]" --body-file .gemini/pr_body.md --draft`.
-- **Escaping:** Escape all double quotes in the title as \".
+- **Title Format:** `<Type>: <Subject>` where both Type and Subject start with capital letters (e.g., `Feat: Add auth provider`)
+- **Body Structure:** Use markdown headers: `## Summary`, `## Key Changes`, `## Testing`
+- **File Writing:** Write PR body to `.gemini/.tmp/pr_body.md` using a single heredoc command wrapped in a subshell
+- **Command Format:** Use `(cat <<'EOF'` with opening parenthesis, then content, then `EOF` and closing parenthesis on same line as `gh pr create`)
+- **GitHub CLI:** Use `gh pr create --title "<Type>: <Subject>" --body-file .gemini/.tmp/pr_body.md --draft`
+- **Escaping:** Escape double quotes in title as \"
 
 ## Must NOT Do:
 
-- Use emojis in the PR title.
-- Indent the closing `EOF` tag.
-- Include conversational filler or "Here is the command".
-- Assume the existence of a `.gemini` folder; create it if needed.
+- Use lowercase type (NO `feat:`, use `Feat:`)
+- Use lowercase subject start (NO `Feat: add`, use `Feat: Add`)
+- Split heredoc across multiple shell command lines
+- Use emojis in title
 
 ---
 
@@ -53,47 +51,26 @@ User Notes: {{args}}
 
    # PREVIEW
 
-**Title:** <Generated Title>
-**Branch:** <Current Branch>
-**Files Impacted:** <count from Diff Stats>
+**Title:** <Type>: <Subject>
+**Branch:** <current branch>
+**Files Impacted:** <count>
    
-**Description Summary:**
-<One sentence overview of the changes>
+**Summary:** <one sentence>
    
 ## FINAL COMMAND
 
 ```bash
-# Ensure directory exists
-mkdir -p .gemini
-
-# Write PR body
-cat <<'EOF' > .gemini/pr_body.md
+mkdir -p .gemini/.tmp && (cat <<'EOF' > .gemini/.tmp/pr_body.md
 ## Summary
-<content>
+<concise overview>
 
 ## Key Changes
-- <change>
+- <change 1>
+- <change 2>
 
 ## Testing
-- <test_details>
+- <testing approach>
 EOF
-
-# Create the Draft PR
-gh pr create --title "<Type>: <Subject>" --body-file .gemini/pr_body.md --draft
-```
-   
----
-
-**Note:** If 'Remote URL' is missing, output the following:
-
-# PREVIEW
-
-**Status:** Error
-**Reason:** Git remote 'origin' not found.
-
-## FINAL COMMAND
-
-```bash
-echo "Error: No git remote configured. PR cannot be created."
+) && gh pr create --title "<Type>: <Subject>" --body-file .gemini/.tmp/pr_body.md --draft
 ```
 """
