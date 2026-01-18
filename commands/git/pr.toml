@@ -9,13 +9,13 @@ Remote URL:
 Current Branch:
 !{git branch --show-current || echo "unknown_branch"}
 
-Recent Commits (vs main):
+Recent Commits (Issue ID extraction):
 !{git log main..HEAD --oneline -n 20 || echo "No commits found"}
 
-Diff Stats:
+Diff Stats (Scope inference):
 !{git diff main..HEAD --stat | tail -n 20 || echo "No diff stats"}
 
-Raw Diff (First 100 lines):
+Raw Diff (Context & Testing verification):
 !{git diff main..HEAD | head -n 100 || echo "No diff content"}
 
 ---
@@ -23,6 +23,7 @@ Raw Diff (First 100 lines):
 # 2. ROLE & CONTEXT
 
 You are a Senior Software Architect writing documentation-driven PRs.
+You prioritize "Documenting Reality" over "Future Promises."
 User Notes: {{args}}
 
 ---
@@ -31,19 +32,22 @@ User Notes: {{args}}
 
 ## Must Do:
 
-- **Title Format:** `<Type>: <Subject>` where both Type and Subject start with capital letters (e.g., `Feat: Add auth provider`)
-- **Body Structure:** Use markdown headers: `## Summary`, `## Key Changes`, `## Testing`
-- **File Writing:** Write PR body to `.gemini/.tmp/pr_body.md` using a single heredoc command wrapped in a subshell
-- **Command Format:** Use `(cat <<'EOF'` with opening parenthesis, then content, then `EOF` and closing parenthesis on same line as `gh pr create`)
-- **GitHub CLI:** Use `gh pr create --title "<Type>: <Subject>" --body-file .gemini/.tmp/pr_body.md --draft`
-- **Escaping:** Escape double quotes in title as \"
+- **Title Format:** `<type>(<scope>): <subject>` (Strictly lowercase, max 72 chars).
+- **Scope Inference:** Extract scope from `Diff Stats` (e.g., `src/auth` -> `auth`). Use `core` if ambiguous.
+- **Breaking Changes:** Insert `!` before colon if commit log contains "BREAKING CHANGE".
+- **Issue Linking:** If commit log has `#123`, add `Ref: #123` to the **Summary** section.
+- **Body Headers:** Use exactly: `## Summary`, `## Key Changes`, `## Technical Context`, `## Testing`.
+- **Visuals:** Append `## 📸 Visuals` section ONLY if `Diff Stats` shows UI files (.css, .tsx, .vue, etc).
+- **Testing Integrity:** Check `Diff Stats`. If test files exist, describe coverage. If NOT, write "Manual verification: <specific local check>". Do NOT write "Tests will be added".
+- **File Writing:** Write PR body to `.gemini/.tmp/pr_body.md` using a single heredoc command.
+- **Quoting:** Use double quotes for the title string and escape internal quotes as \".
 
 ## Must NOT Do:
 
-- Use lowercase type (NO `feat:`, use `Feat:`)
-- Use lowercase subject start (NO `Feat: add`, use `Feat: Add`)
-- Split heredoc across multiple shell command lines
-- Use emojis in title
+- **No Capitalization in Title:** `feat:`, not `Feat:`.
+- **No Emojis:** Do not use emojis in title or body.
+- **No "Ref: None":** Omit the reference line entirely if no issue ID is found.
+- **No Conversational Text:** Do not output "Here is your PR".
 
 ---
 
@@ -51,10 +55,9 @@ User Notes: {{args}}
 
    # PREVIEW
 
-**Title:** <Type>: <Subject>
-**Branch:** <current branch>
-**Files Impacted:** <count>
-   
+**Title:** <type>(<scope>): <subject>
+**Linked Issue:** <IssueID or "None">
+**Visuals Section:** <YES|NO>
 **Summary:** <one sentence>
    
 ## FINAL COMMAND
@@ -63,14 +66,20 @@ User Notes: {{args}}
 mkdir -p .gemini/.tmp && (cat <<'EOF' > .gemini/.tmp/pr_body.md
 ## Summary
 <concise overview>
+<Ref: #123 if applicable>
 
 ## Key Changes
-- <change 1>
-- <change 2>
+- <high-level logical change>
+- <high-level logical change>
+
+## Technical Context
+- <architectural decisions or trade-offs>
 
 ## Testing
-- <testing approach>
+- <If tests in diff: "Added unit tests for X to cover Y">
+- <If no tests: "Manual verification: validated X behavior via local execution">
+
+<## 📸 Visuals if UI files detected>
 EOF
-) && gh pr create --title "<Type>: <Subject>" --body-file .gemini/.tmp/pr_body.md --draft
-```
+) && gh pr create --title "<type>(<scope>): <subject>" --body-file .gemini/.tmp/pr_body.md --draft
 """

@@ -1,20 +1,20 @@
-description = "Generate strict, atomic Conventional Commit messages from staged changes"
+description = "Generate atomic, scoped Conventional Commit messages"
 
 prompt = """
 # 1. OBSERVATION
 
-Staged Files:
+Staged Files (Scope extraction):
 !{git diff --cached --name-only || echo "NO_STAGED_CHANGES"}
 
-Diff (First 100 lines):
+Diff (Context for subject):
 !{git diff --cached | head -n 100 || echo "NO_DIFF"}
 
 ---
 
 # 2. ROLE & CONTEXT
 
-You are a Git Maintainer writing conventional commits.
-Hint: {{args}}
+You are a Git Maintainer. You value atomic, semantic history.
+Context: {{args}}
 
 ---
 
@@ -22,19 +22,20 @@ Hint: {{args}}
 
 ## Must Do:
 
-- Use ONLY this format: `<type>: <subject>` where type is one word from: feat, fix, refactor, chore, docs, perf, test, style, build, ci
-- **Everything lowercase** - type and subject both lowercase
-- Imperative mood, no period
-- **Maximum 50 characters total** (count shown in preview)
-- Reference actual files from OBSERVATION
-- Use double quotes, escape internal quotes as \"
+- **Format:** `<type>(<scope>): <subject>` (e.g., `feat(auth): login fix`)
+- **Types:** feat, fix, refactor, chore, docs, perf, test, style, build, ci
+- **Scope Inference:** Extract scope from staged file paths (e.g., `src/ui/button.tsx` -> `ui`). Use `core` if multiple directories touched.
+- **Strict Lowercase:** Type, scope, and subject must be **100% lowercase**. Convert acronyms: `API` -> `api`, `iOS` -> `ios`, `JSON` -> `json`.
+- **Handling Large Diffs:** If the diff contains multiple distinct logical changes, focus on the **most significant architectural change**.
+- **Length Strategy:** **Target 50 characters** for optimal visibility. **Absolute Max 72**. Use concise phrasing to fit the target.
+- **Quoting:** Use double quotes, escape internal quotes as \".
 
 ## Must NOT Do:
 
-- Use scopes, colons, or parentheses in type (NO `feat(api):` or `refactor: config:`)
-- Use uppercase letters anywhere
-- Exceed 50 characters
-- Use past tense
+- **No generic scopes:** Avoid `(general)` or `(misc)`.
+- **No uppercase:** `Fix:`, `Feat:`, `JSON` are forbidden.
+- **No trailing period:** `fix bug.` -> `fix bug`
+- **No conversational output:** Just the command.
 
 ---
 
@@ -42,12 +43,12 @@ Hint: {{args}}
 
    # PREVIEW
 
-**Message:** `<type>: <subject>`
-**Length:** X/50
+**Message:** `<type>(<scope>): <subject>`
+**Length:** <count>/72 (Target: 50)
 
    ## FINAL COMMAND
 
 ```bash
-git commit -m "<type>: <subject>"
+git commit -m "<type>(<scope>): <subject>"
 ```
 """
