@@ -1,5 +1,12 @@
 # Changelog
 
+## [4.69.0](https://github.com/erclx/canon/compare/v4.68.0...v4.69.0) (2026-09-07)
+
+
+### Features
+
+* **cli:** warn on checkout mismatch in feedback and gate run ([#1597](https://github.com/erclx/canon/issues/1597)) ([09f93c1](https://github.com/erclx/canon/commit/09f93c140bab52dd58c3296d70efa37583890930))
+
 ## [4.68.0](https://github.com/erclx/canon/compare/v4.67.0...v4.68.0) (2026-09-07)
 
 
